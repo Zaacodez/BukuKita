@@ -22,7 +22,6 @@ Melalui fitur *chatbot* yang terintegrasi, pengguna dapat berdiskusi secara natu
     *   **Intent & Entity Recognition**: Memahami maksud spesifik pengguna (mencari berdasarkan penulis, judul, maupun kategori buku).
     *   **Natural Language Processing (NLP)**: Cerdas dan toleran terhadap variasi bahasa informal, singkatan, *typo*, maupun bahasa gaul sehari-hari.
     *   **Anti-Halusinasi (Data Grounding)**: Mengikat konteks jawaban Gemini API dengan data riil pada *database* Supabase untuk memastikan informasi stok dan harga 100% akurat.
-*   **Pembaruan Katalog Otomatis**: Mekanisme *scraping* data pustaka yang up-to-date memanfaatkan integrasi Open Library API.
 *   **Manajemen Profil Pengguna**: Kemudahan memperbarui data informasi akun (*display name* dan *username*) secara *real-time*.
 
 ---
