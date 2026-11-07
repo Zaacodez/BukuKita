@@ -23,7 +23,7 @@ Melalui *chatbot* yang terintegrasi, pengguna dapat berdiskusi secara natural un
 *   **Asisten Pintar BukuKita (Chatbot AI)**:
     *   **Intent & Entity Recognition**: Memahami maksud pengguna, misalnya pencarian berdasarkan penulis, judul, maupun kategori buku.
     *   **Natural Language Processing (NLP)**: Membantu memahami variasi bahasa informal, singkatan, dan *typo* dalam pertanyaan pengguna.
-    *   **Data Grounding**: Konteks jawaban Gemini API dibantu dengan data katalog riil pada *database* Supabase, agar jawaban lebih relevan dengan data buku yang tersedia dan risiko jawaban yang tidak sesuai data dapat dikurangi. Mekanisme ini membantu, bukan menjamin jawaban selalu akurat, sehingga informasi penting tetap perlu dicek pada data katalog.
+    *   **Data Grounding**: Menggunakan data katalog buku dari Supabase sebagai konteks untuk membantu meningkatkan relevansi dan akurasi jawaban chatbot terkait informasi produk, harga, dan ketersediaan stok. Mekanisme ini membantu, bukan menjamin jawaban selalu akurat — sistem AI generatif tetap bisa salah memahami data atau memberi jawaban yang keliru, sehingga informasi penting tetap perlu dicek pada data katalog.
 *   **Manajemen Profil Pengguna**: Pengguna dapat memperbarui informasi akun, seperti *display name* dan *username*.
 
 ---
