@@ -15,7 +15,9 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _isLoggedIn = MutableStateFlow(repository.getCurrentUser() != null)
+    private val _isLoggedIn = MutableStateFlow(
+        repository.getCurrentUser() != null || repository.getSavedUserId() != null
+    )
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
     private val _isUpdating = MutableStateFlow(false)
@@ -23,6 +25,10 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    fun clearError() {
+        _errorMessage.value = null
+    }
 
     private val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile: StateFlow<UserProfile?> = _userProfile.asStateFlow()
@@ -33,10 +39,11 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
 
     fun fetchProfile() {
         val user = repository.getCurrentUser()
-        if (user != null) {
+        val userId = user?.id ?: repository.getSavedUserId()
+        if (userId != null) {
             viewModelScope.launch {
                 _isLoading.value = true
-                val profile = repository.getUserProfile(user.id)
+                val profile = repository.getUserProfile(userId)
                 _userProfile.value = profile
                 _isLoading.value = false
             }
@@ -74,14 +81,15 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
     }
 
     fun logout() {
+        _isLoggedIn.value = false
+        _userProfile.value = null
+        _errorMessage.value = null
         viewModelScope.launch {
             _isLoading.value = true
-            _errorMessage.value = null
             try {
                 repository.signOut()
-                _isLoggedIn.value = false
-            } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Terjadi kesalahan saat keluar"
+            } catch (_: Exception) {
+                // Local session state is cleared immediately so navigation to Login never bounces back
             } finally {
                 _isLoading.value = false
             }

@@ -59,7 +59,18 @@ class BookViewModel : ViewModel() {
 
     fun clearSearch() {
         _searchQuery.value = ""
-        _uiState.value = BookUiState.Success(emptyList())
+    }
+
+    fun resetFilters() {
+        _searchQuery.value = ""
+        _selectedCategory.value = ALL_CATEGORY
+    }
+
+    fun retry() {
+        if (_categories.value.size <= 1) {
+            fetchCategories()
+        }
+        executeFetch(_searchQuery.value, _selectedCategory.value)
     }
 
     fun onCategorySelected(category: String) {
@@ -77,7 +88,7 @@ class BookViewModel : ViewModel() {
                 
                 _categories.value = listOf(ALL_CATEGORY) + uniqueCategories
             } catch (e: Exception) {
-                // If fails, categories will just be ["All"] naturally
+                // Keep default ["Semua"] if offline or failing
             }
         }
     }
@@ -96,11 +107,7 @@ class BookViewModel : ViewModel() {
                     repository.searchAndFilterBooks(query, category)
                 }
 
-                if (books.isEmpty()) {
-                    _uiState.value = BookUiState.Error("Buku tidak ditemukan.")
-                } else {
-                    _uiState.value = BookUiState.Success(books)
-                }
+                _uiState.value = BookUiState.Success(books)
             } catch (e: Exception) {
                 _uiState.value = BookUiState.Error(e.localizedMessage ?: "Kesalahan tidak diketahui")
             }

@@ -1,5 +1,6 @@
 package com.example.bukukita.data.remote
 
+import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
@@ -17,13 +18,17 @@ object ApiClient {
         .build()
 
     // Supabase native Kotlin client (for Auth & direct SDK features)
-    val supabaseClient = createSupabaseClient(
-        supabaseUrl = ApiConfig.SUPABASE_URL,
-        supabaseKey = ApiConfig.SUPABASE_ANON_KEY
-    ) {
-        install(Auth)
-        install(Postgrest)
-        install(Storage)
+    lateinit var supabaseClient: SupabaseClient
+
+    fun init(context: android.content.Context) {
+        supabaseClient = createSupabaseClient(
+            supabaseUrl = ApiConfig.SUPABASE_URL,
+            supabaseKey = ApiConfig.SUPABASE_ANON_KEY
+        ) {
+            install(Auth)
+            install(Postgrest)
+            install(Storage)
+        }
     }
 
     // Retrofit client (for custom database endpoints if needed)

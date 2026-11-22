@@ -39,6 +39,38 @@ class BookRepository {
         }
     }
 
+    suspend fun searchBooksGeneral(query: String): List<Book> {
+        return withContext(Dispatchers.IO) {
+            // Pecah kata kunci untuk mencari setiap kata di judul atau penulis
+            // Hal ini meningkatkan recall (menemukan lebih banyak buku potensial)
+            val words = query.trim().split("\\s+".toRegex()).filter { it.length > 2 }
+            if (words.isEmpty()) {
+                // Jika kata terlalu pendek, coba cari secara utuh
+                val orQuery = "(title.ilike.%$query%,author.ilike.%$query%)"
+                return@withContext apiService.searchBooksGeneral(
+                    apiKey = ApiConfig.SUPABASE_ANON_KEY,
+                    authorization = "Bearer ${ApiConfig.SUPABASE_ANON_KEY}",
+                    orQuery = orQuery
+                )
+            }
+
+            // Bangun query OR yang sangat inklusif
+            val orParts = mutableListOf<String>()
+            words.forEach { word ->
+                orParts.add("title.ilike.%$word%")
+                orParts.add("author.ilike.%$word%")
+            }
+            
+            val orQuery = "(${orParts.joinToString(",")})"
+
+            apiService.searchBooksGeneral(
+                apiKey = ApiConfig.SUPABASE_ANON_KEY,
+                authorization = "Bearer ${ApiConfig.SUPABASE_ANON_KEY}",
+                orQuery = orQuery
+            )
+        }
+    }
+
     suspend fun getBooksByCategory(category: String): List<Book> {
         return withContext(Dispatchers.IO) {
             apiService.getBooksByCategory(

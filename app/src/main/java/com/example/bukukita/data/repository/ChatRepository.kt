@@ -6,18 +6,19 @@ import kotlinx.coroutines.flow.Flow
 
 class ChatRepository(private val chatMessageDao: ChatMessageDao) {
 
-    val allMessages: Flow<List<ChatMessageEntity>> = chatMessageDao.getAllMessages()
+    fun getMessagesForUser(userId: String) = chatMessageDao.getMessagesForUser(userId)
 
-    suspend fun insertMessage(message: String, isUser: Boolean) {
+    suspend fun insertMessage(userId: String, message: String, isUser: Boolean) {
         val chatEntity = ChatMessageEntity(
             message = message,
             isUser = isUser,
-            timestamp = System.currentTimeMillis()
+            timestamp = System.currentTimeMillis(),
+            userId = userId
         )
         chatMessageDao.insertMessage(chatEntity)
     }
 
-    suspend fun clearMessages() {
-        chatMessageDao.clearMessages()
+    suspend fun clearMessagesForUser(userId: String) {
+        chatMessageDao.clearMessagesForUser(userId)
     }
 }

@@ -9,5 +9,6 @@ data class ChatMessageEntity(
     val id: Int = 0,
     val message: String,
     val isUser: Boolean,
-    val timestamp: Long
+    val timestamp: Long,
+    val userId: String = ""
 )

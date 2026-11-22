@@ -1,5 +1,7 @@
 package com.example.bukukita.data.repository
 
+import android.content.Context
+import android.content.SharedPreferences
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
@@ -19,7 +21,15 @@ import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.storage.storage
 import android.util.Log
 
-class AuthRepository(private val supabase: SupabaseClient) {
+class AuthRepository(private val supabase: SupabaseClient, private val context: Context) {
+
+    private val prefs: SharedPreferences by lazy {
+        context.getSharedPreferences("bukukita_prefs", Context.MODE_PRIVATE)
+    }
+
+    companion object {
+        private const val KEY_SAVED_USER_ID = "saved_user_id"
+    }
 
     suspend fun signUp(
         email: String, 
@@ -101,17 +111,29 @@ class AuthRepository(private val supabase: SupabaseClient) {
                 this.email = loginEmail
                 this.password = password
             }
+
+            // Jika berhasil, simpan user id ke SharedPreferences agar UI dapat mempertahankan state login
+            val userId = supabase.auth.currentUserOrNull()?.id
+            if (userId != null) {
+                prefs.edit().putString(KEY_SAVED_USER_ID, userId).apply()
+            }
         }
     }
 
     suspend fun signOut() {
         withContext(Dispatchers.IO) {
             supabase.auth.signOut()
+            // Hapus saved user id
+            prefs.edit().remove(KEY_SAVED_USER_ID).apply()
         }
     }
 
     fun getCurrentUser(): UserInfo? {
         return supabase.auth.currentUserOrNull()
+    }
+
+    fun getSavedUserId(): String? {
+        return prefs.getString(KEY_SAVED_USER_ID, null)
     }
 
     suspend fun getUserProfile(userId: String): UserProfile? {

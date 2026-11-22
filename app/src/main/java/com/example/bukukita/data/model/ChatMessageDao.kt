@@ -11,9 +11,9 @@ interface ChatMessageDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(chatMessage: ChatMessageEntity)
 
-    @Query("SELECT * FROM chat_messages ORDER BY timestamp ASC")
-    fun getAllMessages(): Flow<List<ChatMessageEntity>>
+    @Query("SELECT * FROM chat_messages WHERE userId = :userId ORDER BY timestamp ASC")
+    fun getMessagesForUser(userId: String): Flow<List<ChatMessageEntity>>
 
-    @Query("DELETE FROM chat_messages")
-    suspend fun clearMessages()
+    @Query("DELETE FROM chat_messages WHERE userId = :userId")
+    suspend fun clearMessagesForUser(userId: String)
 }

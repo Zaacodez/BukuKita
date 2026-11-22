@@ -1,156 +1,146 @@
 package com.example.bukukita
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.bukukita.ui.chatbot.ChatbotScreen
-import com.example.bukukita.ui.profile.ProfileScreen
-import com.example.bukukita.ui.profile.EditProfileScreen
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Text
-import androidx.compose.runtime.getValue
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.bukukita.ui.detail.BookDetailScreen
-import com.example.bukukita.ui.home.HomeScreen
-import com.example.bukukita.ui.search.SearchScreen
-import com.example.bukukita.ui.theme.BukuKitaTheme
-import com.example.bukukita.viewmodel.ChatbotViewModelFactory
-import com.example.bukukita.viewmodel.AuthViewModel
-import com.example.bukukita.viewmodel.AuthViewModelFactory
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.bukukita.ui.auth.LoginScreen
 import com.example.bukukita.ui.auth.RegisterScreen
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.collectAsState
+import com.example.bukukita.ui.chatbot.ChatbotScreen
+import com.example.bukukita.ui.components.BukuKitaBottomBar
+import com.example.bukukita.ui.detail.BookDetailScreen
+import com.example.bukukita.ui.home.HomeScreen
+import com.example.bukukita.ui.profile.EditProfileScreen
+import com.example.bukukita.ui.profile.ProfileScreen
+import com.example.bukukita.ui.search.SearchScreen
+import com.example.bukukita.ui.theme.BukuKitaMotion
+import com.example.bukukita.ui.theme.BukuKitaTheme
+import com.example.bukukita.ui.theme.ThemeMode
+import com.example.bukukita.ui.theme.ThemePreferenceStore
+import com.example.bukukita.viewmodel.AuthViewModel
+import com.example.bukukita.viewmodel.AuthViewModelFactory
+import com.example.bukukita.viewmodel.ChatbotViewModel
+import com.example.bukukita.viewmodel.ChatbotViewModelFactory
 
-import androidx.compose.ui.graphics.vector.ImageVector
-
-data class BottomNavItem(
-    val title: String,
-    val route: String,
-    val icon: ImageVector
-)
+private val TopLevelRoutes = setOf("home", "search", "chatbot", "profile")
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            BukuKitaTheme {
-                BukuKitaApp()
+            val context = LocalContext.current
+            val themeStore = remember(context) { ThemePreferenceStore(context.applicationContext) }
+            val themeMode by themeStore.themeMode.collectAsState()
+
+            BukuKitaTheme(themeMode = themeMode) {
+                BukuKitaApp(
+                    themeMode = themeMode,
+                    onThemeModeChange = themeStore::setThemeMode
+                )
             }
         }
     }
 }
 
 @Composable
-fun BukuKitaApp() {
+fun BukuKitaApp(
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit
+) {
     val context = LocalContext.current
     val application = context.applicationContext as BukuKitaApplication
     val authViewModel: AuthViewModel = viewModel(
         factory = AuthViewModelFactory(application.authRepository)
     )
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
-    
+    // Freeze initial startDestination so NavHost does not rebuild its graph mid-transition on login/logout
+    val initialRoute = remember { if (isLoggedIn) "home" else "login" }
+
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+    val currentBaseRoute = currentDestination?.route?.substringBefore("?")
+    val showBottomBar = currentBaseRoute in TopLevelRoutes
+
+    val navigateToTopLevel: (String) -> Unit = { route ->
+        if (currentBaseRoute != route) {
+            navController.navigate(route) {
+                popUpTo("home") {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
+        // Individual screens own statusBars/navigationBars so colored hero headers bleed edge-to-edge cleanly
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            val navBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentDestination = navBackStackEntry?.destination
-            val currentRoute = currentDestination?.route
-            
-            // Tampilkan bottom bar hanya pada route utama
-            val bottomBarRoutes = listOf("home", "search", "chatbot", "profile")
-            if (bottomBarRoutes.contains(currentRoute)) {
-                Surface(
-                    modifier = Modifier.shadow(
-                        elevation = 16.dp, 
-                        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-                    ).clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                ) {
-                    val items = listOf(
-                        BottomNavItem(stringResource(R.string.nav_home), "home", Icons.Default.Home),
-                        BottomNavItem(stringResource(R.string.nav_search), "search", Icons.Default.Search),
-                        BottomNavItem(stringResource(R.string.nav_chatbot), "chatbot", Icons.AutoMirrored.Filled.Chat),
-                        BottomNavItem(stringResource(R.string.nav_profile), "profile", Icons.Default.Person)
-                    )
-
-                    NavigationBar(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 8.dp
-                    ) {
-                        items.forEach { item ->
-                            NavigationBarItem(
-                                icon = { Icon(item.icon, contentDescription = item.title) },
-                                label = {
-                                    Text(
-                                        item.title,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = if (currentDestination?.hierarchy?.any { it.route == item.route } == true) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface
-                                        }
-                                    )
-                                },
-                                selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                                    unselectedIconColor = MaterialTheme.colorScheme.onSurface,
-                                    unselectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer
-                                ),
-                                onClick = {
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = false
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = false
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
+            if (showBottomBar) {
+                BukuKitaBottomBar(
+                    currentDestination = currentDestination,
+                    onNavigate = navigateToTopLevel
+                )
             }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = if (isLoggedIn) "home" else "login",
-            modifier = Modifier.padding(innerPadding)
+            startDestination = initialRoute,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding),
+            enterTransition = {
+                val targetBase = targetState.destination.route?.substringBefore("?")
+                val initialBase = initialState.destination.route?.substringBefore("?")
+                if (targetBase in TopLevelRoutes && initialBase in TopLevelRoutes) {
+                    fadeIn(tween(BukuKitaMotion.ContentCrossfadeMs, easing = BukuKitaMotion.StandardEasing))
+                } else {
+                    fadeIn(tween(BukuKitaMotion.ScreenEnterMs, easing = BukuKitaMotion.StandardEasing)) +
+                        slideInHorizontally(tween(BukuKitaMotion.ScreenEnterMs, easing = BukuKitaMotion.StandardEasing)) { it / 18 }
+                }
+            },
+            exitTransition = {
+                fadeOut(tween(BukuKitaMotion.ScreenExitMs, easing = BukuKitaMotion.ExitEasing))
+            },
+            popEnterTransition = {
+                fadeIn(tween(BukuKitaMotion.ScreenEnterMs, easing = BukuKitaMotion.StandardEasing))
+            },
+            popExitTransition = {
+                fadeOut(tween(BukuKitaMotion.ScreenExitMs, easing = BukuKitaMotion.ExitEasing)) +
+                    slideOutHorizontally(tween(BukuKitaMotion.ScreenExitMs, easing = BukuKitaMotion.ExitEasing)) { it / 18 }
+            }
         ) {
             composable("login") {
                 LoginScreen(
@@ -168,27 +158,27 @@ fun BukuKitaApp() {
                     viewModel = authViewModel,
                     onNavigateToHome = {
                         navController.navigate("home") {
-                            popUpTo("register") { inclusive = true }
-                            popUpTo("login") { inclusive = true }
+                            popUpTo(0) { inclusive = true }
                         }
                     },
-                    onNavigateToLogin = {
-                        navController.popBackStack()
-                    }
+                    onNavigateToLogin = { navController.popBackStack() }
                 )
             }
             composable("home") {
                 HomeScreen(
                     onNavigateToDetail = { bookId -> navController.navigate("detail/$bookId") },
-                    onNavigateToSearch = { navController.navigate("search") },
-                    onNavigateToChatbot = { navController.navigate("chatbot") }
+                    onNavigateToSearch = { navigateToTopLevel("search") },
+                    onNavigateToChatbot = { navigateToTopLevel("chatbot") }
                 )
             }
             composable("detail/{bookId}") { backStackEntry ->
                 val bookId = backStackEntry.arguments?.getString("bookId") ?: ""
                 BookDetailScreen(
                     bookId = bookId,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onAskAssistant = { question ->
+                        navController.navigate("chatbot?prefill=${Uri.encode(question)}")
+                    }
                 )
             }
             composable("search") {
@@ -197,23 +187,33 @@ fun BukuKitaApp() {
                     onNavigateToDetail = { bookId -> navController.navigate("detail/$bookId") }
                 )
             }
-            composable("chatbot") {
-                val context = LocalContext.current
-                val application = context.applicationContext as BukuKitaApplication
-                val viewModel: com.example.bukukita.viewmodel.ChatbotViewModel = viewModel(
-                    factory = ChatbotViewModelFactory(application.chatRepository)
+            composable(
+                route = "chatbot?prefill={prefill}",
+                arguments = listOf(
+                    navArgument("prefill") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    }
+                )
+            ) { backStackEntry ->
+                val prefill = backStackEntry.arguments?.getString("prefill").orEmpty()
+                val chatbotViewModel: ChatbotViewModel = viewModel(
+                    factory = ChatbotViewModelFactory(application.chatRepository, application.authRepository)
                 )
                 ChatbotScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    viewModel = viewModel
+                    prefillQuery = prefill,
+                    viewModel = chatbotViewModel
                 )
             }
             composable("profile") {
                 ProfileScreen(
                     authViewModel = authViewModel,
+                    currentThemeMode = themeMode,
+                    onThemeModeChange = onThemeModeChange,
                     onNavigateToLogin = {
                         navController.navigate("login") {
-                            popUpTo(0) { inclusive = true } // Clear entire backstack
+                            popUpTo(0) { inclusive = true }
                         }
                     },
                     onNavigateToEditProfile = {

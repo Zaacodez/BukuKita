@@ -1,7 +1,21 @@
 package com.example.bukukita.ui.home
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -10,41 +24,34 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
+import androidx.compose.material.icons.outlined.Forum
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
+import com.example.bukukita.R
 import com.example.bukukita.data.model.Book
+import com.example.bukukita.ui.components.BookGridShimmer
+import com.example.bukukita.ui.components.BukuKitaBrandMark
+import com.example.bukukita.ui.components.BukuKitaSearchTrigger
+import com.example.bukukita.ui.components.CategoryFilterRow
+import com.example.bukukita.ui.components.EditorialBookCard
+import com.example.bukukita.ui.components.EditorialEmptyState
+import com.example.bukukita.ui.components.EditorialErrorState
+import com.example.bukukita.ui.theme.BukuKitaMotion
+import com.example.bukukita.ui.theme.BukuKitaSpacing
 import com.example.bukukita.viewmodel.BookUiState
 import com.example.bukukita.viewmodel.BookViewModel
-import java.text.NumberFormat
-import java.util.Locale
 
-import com.example.bukukita.utils.formatRupiah
-import androidx.compose.foundation.background
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.CardDefaults
-import androidx.compose.ui.draw.shadow
-import androidx.compose.foundation.border
-import androidx.compose.ui.res.stringResource
-import com.example.bukukita.R
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToDetail: (String) -> Unit,
@@ -53,257 +60,233 @@ fun HomeScreen(
     viewModel: BookViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val categories by viewModel.categories.collectAsState()
 
-    Scaffold(
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.primary)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "BukuKita",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToChatbot,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(24.dp),
-                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Email,
-                    contentDescription = stringResource(R.string.chatbot_open)
-                )
-            }
-        }
-    ) { paddingValues ->
+    HomeScreenContent(
+        uiState = uiState,
+        selectedCategory = selectedCategory,
+        categories = categories,
+        onCategorySelected = viewModel::onCategorySelected,
+        onRetry = viewModel::retry,
+        onResetFilters = viewModel::resetFilters,
+        onNavigateToDetail = onNavigateToDetail,
+        onNavigateToSearch = onNavigateToSearch,
+        onNavigateToChatbot = onNavigateToChatbot
+    )
+}
+
+@Composable
+internal fun HomeScreenContent(
+    uiState: BookUiState,
+    selectedCategory: String,
+    categories: List<String>,
+    onCategorySelected: (String) -> Unit,
+    onRetry: () -> Unit,
+    onResetFilters: () -> Unit,
+    onNavigateToDetail: (String) -> Unit,
+    onNavigateToSearch: () -> Unit,
+    onNavigateToChatbot: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(paddingValues)
+                .statusBarsPadding()
         ) {
-            Box(
+            // Editorial Brand Header
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(50)
-                    )
-                    .clip(RoundedCornerShape(50))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .clickable { onNavigateToSearch() }
+                    .padding(
+                        horizontal = BukuKitaSpacing.screenHorizontal,
+                        vertical = BukuKitaSpacing.sm
+                    ),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = stringResource(R.string.search),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = stringResource(R.string.search_books),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Icon(
-                        imageVector = Icons.Default.Menu, // Using Menu as a placeholder for a microphone or filter
-                        contentDescription = stringResource(R.string.filter),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                BukuKitaBrandMark(
+                    contentDescription = stringResource(R.string.brand_logo_desc),
+                    modifier = Modifier.size(30.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             }
 
-            LazyRow(
+            // Quiet Editorial Search Trigger
+            BukuKitaSearchTrigger(
+                placeholder = stringResource(R.string.search_books),
+                onClick = onNavigateToSearch,
+                modifier = Modifier.padding(horizontal = BukuKitaSpacing.screenHorizontal)
+            )
+
+            Spacer(modifier = Modifier.height(BukuKitaSpacing.xs))
+
+            // Category Filter Pills
+            CategoryFilterRow(
+                categories = categories,
+                selectedCategory = selectedCategory,
+                onCategorySelected = onCategorySelected
+            )
+
+            Spacer(modifier = Modifier.height(BukuKitaSpacing.xxs))
+
+            // Catalog Content
+            Crossfade(
+                targetState = uiState,
+                animationSpec = tween(
+                    durationMillis = BukuKitaMotion.ContentCrossfadeMs,
+                    easing = BukuKitaMotion.DecelerateEasing
+                ),
+                label = "homeContentCrossfade",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(categories) { category ->
-                    val isSelected = category == selectedCategory
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha=0.5f)),
-                        modifier = Modifier.clickable { viewModel.onCategorySelected(category) }
-                    ) {
-                        Text(
-                            text = category,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-                    }
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
                     .weight(1f)
-            ) {
-                when (uiState) {
+            ) { state ->
+                when (state) {
                     is BookUiState.Loading -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center)
-                        )
+                        BookGridShimmer()
                     }
                     is BookUiState.Error -> {
-                        val errorMessage = (uiState as BookUiState.Error).message
-                        Text(
-                            text = errorMessage,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .padding(16.dp)
-                        )
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            EditorialErrorState(
+                                message = state.message,
+                                onRetry = onRetry
+                            )
+                        }
                     }
                     is BookUiState.Success -> {
-                        val books = (uiState as BookUiState.Success).books
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            if (books.isNotEmpty()) {
-                                item(span = { GridItemSpan(maxLineSpan) }) {
-                                    Column(modifier = Modifier.padding(bottom = 20.dp)) {
-                                        Text(
-                                            text = stringResource(R.string.recommended_books),
-                                            style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(bottom = 12.dp)
-                                        )
-                                        LazyRow(
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            items(books.take(10)) { book ->
-                                                BookCard(
-                                                    book = book,
-                                                    modifier = Modifier.width(140.dp),
-                                                    onClick = { onNavigateToDetail(book.id) }
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-
-                                item(span = { GridItemSpan(maxLineSpan) }) {
-                                    Text(
-                                        text = stringResource(R.string.all_books),
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(bottom = 8.dp)
-                                    )
-                                }
-                            }
-
-                            items(books) { book ->
-                                BookCard(
-                                    book = book,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = { onNavigateToDetail(book.id) }
+                        if (state.books.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                EditorialEmptyState(
+                                    illustrationRes = R.drawable.ill_empty_search,
+                                    title = stringResource(R.string.books_not_found),
+                                    subtitle = stringResource(R.string.books_not_found_hint),
+                                    actionLabel = stringResource(R.string.reset_search),
+                                    onAction = onResetFilters
                                 )
                             }
+                        } else {
+                            HomeCatalogGrid(
+                                books = state.books,
+                                onBookClick = onNavigateToDetail
+                            )
                         }
                     }
                 }
             }
         }
+
+        // Restrained Sage Assistant FAB
+        FloatingActionButton(
+            onClick = onNavigateToChatbot,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            shape = RoundedCornerShape(16.dp),
+            elevation = FloatingActionButtonDefaults.elevation(
+                defaultElevation = 3.dp,
+                pressedElevation = 1.dp
+            ),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(BukuKitaSpacing.md)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Forum,
+                contentDescription = stringResource(R.string.chatbot_open),
+                modifier = Modifier.size(24.dp)
+            )
+        }
     }
 }
 
+@Composable
+private fun HomeCatalogGrid(
+    books: List<Book>,
+    onBookClick: (String) -> Unit
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 156.dp),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = BukuKitaSpacing.screenHorizontal,
+            end = BukuKitaSpacing.screenHorizontal,
+            top = BukuKitaSpacing.xs,
+            bottom = 88.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(BukuKitaSpacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(BukuKitaSpacing.sm)
+    ) {
+        item(key = "recommended_section", span = { GridItemSpan(maxLineSpan) }) {
+            Column(modifier = Modifier.padding(bottom = BukuKitaSpacing.sm)) {
+                Text(
+                    text = stringResource(R.string.recommended_books),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = BukuKitaSpacing.sm)
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(BukuKitaSpacing.sm)
+                ) {
+                    items(
+                        items = books.take(10),
+                        key = { "rec_${it.id}" }
+                    ) { book ->
+                        EditorialBookCard(
+                            book = book,
+                            onClick = { onBookClick(book.id) },
+                            modifier = Modifier.width(156.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        item(key = "all_books_header", span = { GridItemSpan(maxLineSpan) }) {
+            Text(
+                text = stringResource(R.string.all_books),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(top = BukuKitaSpacing.xs, bottom = BukuKitaSpacing.xxs)
+            )
+        }
+
+        items(
+            items = books,
+            key = { it.id }
+        ) { book ->
+            EditorialBookCard(
+                book = book,
+                onClick = { onBookClick(book.id) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+// Preserve backwards-compatible symbol name in case any caller imports BookCard from ui.home
 @Composable
 fun BookCard(
     book: Book,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val formattedPrice = remember(book.price) {
-        formatRupiah(book.price)
-    }
-
-    ElevatedCard(
+    EditorialBookCard(
+        book = book,
+        onClick = onClick,
         modifier = modifier
-            .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            AsyncImage(
-                model = book.coverUrl,
-                contentDescription = "Cover for ${book.title}",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(0.7f)
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-            )
-            
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-            ) {
-                Text(
-                    text = book.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = book.author,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = formattedPrice,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.ExtraBold
-                )
-            }
-        }
-    }
+    )
 }
-

@@ -40,4 +40,11 @@ interface SupabaseApiService {
         @Query("title") titleQuery: String,
         @Query("category") categoryQuery: String
     ): List<Book>
+
+    @GET("rest/v1/books")
+    suspend fun searchBooksGeneral(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") authorization: String,
+        @Query("or") orQuery: String
+    ): List<Book>
 }

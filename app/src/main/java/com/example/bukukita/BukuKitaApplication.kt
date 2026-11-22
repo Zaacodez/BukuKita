@@ -9,5 +9,10 @@ import com.example.bukukita.data.remote.ApiClient
 class BukuKitaApplication : Application() {
     val database by lazy { AppDatabase.getDatabase(this) }
     val chatRepository by lazy { ChatRepository(database.chatMessageDao()) }
-    val authRepository by lazy { AuthRepository(ApiClient.supabaseClient) }
+    override fun onCreate() {
+        super.onCreate()
+        ApiClient.init(this)
+    }
+
+    val authRepository by lazy { AuthRepository(ApiClient.supabaseClient, this) }
 }
