@@ -1,5 +1,5 @@
-<resources>
-    <string name="app_name">BukuKita</string>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="id">
+    <string name="app_name" translatable="false">BukuKita</string>
     <string name="nav_home">Beranda</string>
     <string name="nav_search">Cari</string>
     <string name="nav_chatbot">Chatbot</string>
@@ -64,7 +64,7 @@
     <string name="order_history">Riwayat Pesanan</string>
     <string name="my_reviews">Ulasan Saya</string>
     <string name="settings">Pengaturan</string>
-    <string name="settings_subtitle">Tema tampilan &amp; info toko</string>
+    <string name="settings_subtitle">Tema, bahasa &amp; info toko</string>
     <string name="logout">Keluar</string>
     <string name="logout_confirm_title">Keluar dari BukuKita?</string>
     <string name="logout_confirm_body">Anda perlu masuk kembali untuk mengakses katalog dan riwayat percakapan Anda.</string>
@@ -76,9 +76,13 @@
     <string name="selected_avatar">Avatar yang dipilih</string>
     <string name="current_avatar">Avatar saat ini</string>
     <string name="default_avatar">Avatar bawaan</string>
-    <string name="store_name">Toko Buku Semut Alas</string>
-    <string name="store_address_hours">Jl. Raya Tlogomas No.18, Malang • 09:00 – 21:00</string>
+    <string name="store_name" translatable="false">Toko Buku Semut Alas</string>
+    <string name="store_address_hours" translatable="false">Jl. Raya Tlogomas No.18, Malang • 09:00 – 21:00</string>
     <string name="appearance_section">Tampilan</string>
+    <string name="language_section">Bahasa</string>
+    <string name="language_indonesian" translatable="false">Bahasa Indonesia</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_selector_desc">Pilih bahasa aplikasi</string>
     <string name="store_info_section">Informasi Toko</string>
     <string name="theme_system">Ikuti Sistem</string>
     <string name="theme_light">Mode Terang</string>

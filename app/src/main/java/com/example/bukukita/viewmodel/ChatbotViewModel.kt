@@ -11,6 +11,8 @@ import com.example.bukukita.data.remote.ApiClient
 import com.example.bukukita.data.remote.ApiConfig
 import com.example.bukukita.data.repository.BookRepository
 import com.example.bukukita.data.repository.ChatRepository
+import com.example.bukukita.ui.theme.AppLanguage
+import com.example.bukukita.ui.theme.LanguagePreferenceStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +22,8 @@ data class ChatMessage(val text: String, val isUser: Boolean, val timestamp: Lon
 
 class ChatbotViewModel(
     private val chatRepository: ChatRepository,
-    private val authRepository: com.example.bukukita.data.repository.AuthRepository
+    private val authRepository: com.example.bukukita.data.repository.AuthRepository,
+    private val languagePreferenceStore: LanguagePreferenceStore? = null
 ) : ViewModel() {
     private val bookRepository = BookRepository()
     private val geminiApiService = ApiClient.geminiApiService
@@ -49,11 +52,12 @@ class ChatbotViewModel(
         _isLoading.value = true
 
         viewModelScope.launch {
+            val activeLanguage = languagePreferenceStore?.language?.value ?: AppLanguage.INDONESIAN
             try {
                 val currentUserId = authRepository.getCurrentUser()?.id ?: ""
                 chatRepository.insertMessage(currentUserId, userText, true)
 
-                if (!isIndonesianInput(userText)) {
+                if (activeLanguage == AppLanguage.INDONESIAN && !isIndonesianInput(userText)) {
                     chatRepository.insertMessage(
                         currentUserId,
                         "Maaf, saya hanya dapat membantu dalam bahasa Indonesia. Silakan ajukan pertanyaan dalam bahasa Indonesia.",
@@ -62,12 +66,14 @@ class ChatbotViewModel(
                     return@launch
                 }
                 // 1. Pembersihan Keyword Pencarian
-                // Menghapus sapaan umum agar pencarian lebih fokus
-                val greetingRegex = Regex("(?i)\\b(halo|hai|selamat|pagi|siang|sore|malam|assalamualaikum|permisi|p|oi)\\b")
+                val greetingRegex = if (activeLanguage == AppLanguage.ENGLISH) {
+                    Regex("(?i)\\b(hello|hi|hey|good|morning|afternoon|evening|excuse|me|please|halo|hai)\\b")
+                } else {
+                    Regex("(?i)\\b(halo|hai|selamat|pagi|siang|sore|malam|assalamualaikum|permisi|p|oi)\\b")
+                }
                 val searchKeyword = userText.replace(greetingRegex, "").trim()
 
                 // 2. Pencarian Database
-                // Menggunakan pencarian general yang mencari di judul dan penulis
                 val books = if (searchKeyword.length >= 2) {
                     bookRepository.searchBooksGeneral(searchKeyword).take(20)
                 } else {
@@ -77,16 +83,44 @@ class ChatbotViewModel(
                 // 3. Bangun Konteks Database yang Jelas
                 val contextBuilder = StringBuilder()
                 if (books.isNotEmpty()) {
-                    contextBuilder.appendLine("KONTEKS DATABASE (Data buku yang ditemukan):")
-                    books.forEach { book ->
-                        contextBuilder.appendLine("- Judul: ${book.title} | Penulis: ${book.author} | Harga: Rp${book.price} | Stok: ${book.stock ?: 0}")
+                    if (activeLanguage == AppLanguage.ENGLISH) {
+                        contextBuilder.appendLine("DATABASE CONTEXT (Matching books found):")
+                        books.forEach { book ->
+                            contextBuilder.appendLine("- Title: ${book.title} | Author: ${book.author} | Price: Rp${book.price} | Stock: ${book.stock ?: 0}")
+                        }
+                    } else {
+                        contextBuilder.appendLine("KONTEKS DATABASE (Data buku yang ditemukan):")
+                        books.forEach { book ->
+                            contextBuilder.appendLine("- Judul: ${book.title} | Penulis: ${book.author} | Harga: Rp${book.price} | Stok: ${book.stock ?: 0}")
+                        }
                     }
                 } else if (searchKeyword.length >= 2) {
-                    contextBuilder.appendLine("KONTEKS DATABASE: Tidak ditemukan hasil yang cocok untuk kata kunci '$searchKeyword' di database kami.")
+                    if (activeLanguage == AppLanguage.ENGLISH) {
+                        contextBuilder.appendLine("DATABASE CONTEXT: No matching books were found for '$searchKeyword' in our catalog.")
+                    } else {
+                        contextBuilder.appendLine("KONTEKS DATABASE: Tidak ditemukan hasil yang cocok untuk kata kunci '$searchKeyword' di database kami.")
+                    }
                 }
 
                 // 4. Instruksi Sistem Profesional
-                val systemInstructions = """
+                val systemInstructions = if (activeLanguage == AppLanguage.ENGLISH) {
+                    """
+                    You are the official customer service assistant for Toko Buku Semut Alas.
+
+                    COMMUNICATION STYLE:
+                    - Reply in clear, polite, and professional English.
+                    - Be concise, accurate, and genuinely helpful.
+
+                    RESPONSE GUIDELINES:
+                    1. If the user sends a greeting, respond warmly and offer assistance with our book catalog.
+                    2. Provide availability, price, and author details ONLY based on the 'DATABASE CONTEXT' section above.
+                    3. If matching books exist in the database context (by title or author), share their details accurately.
+                    4. If the requested book is not in the database context, politely explain that it is not currently available in our catalog.
+                    5. DO NOT recommend or invent book titles that are not listed in the database context.
+                    6. Store Location: Jl. Raya Tlogomas No.18, Malang. Opening Hours: 09:00 - 21:00.
+                    """.trimIndent()
+                } else {
+                    """
                     Anda adalah asisten layanan pelanggan resmi dari Toko Buku Semut Alas.
                     
                     GAYA KOMUNIKASI:
@@ -100,7 +134,8 @@ class ChatbotViewModel(
                     4. Jika buku yang ditanyakan sama sekali tidak ada di database, sampaikan dengan sopan bahwa koleksi tersebut saat ini belum tersedia di katalog kami.
                     5. JANGAN merekomendasikan atau menyebutkan judul buku yang tidak terdaftar dalam database.
                     6. Lokasi Toko: Jl. Raya Tlogomas No.18, Malang. Jam Operasional: 09:00 - 21:00.
-                """.trimIndent()
+                    """.trimIndent()
+                }
 
                 // 5. Kelola Riwayat Percakapan (6 pesan terakhir)
                 val history = _messages.value.takeLast(6).map { 
@@ -110,7 +145,8 @@ class ChatbotViewModel(
                     )
                 }.toMutableList()
 
-                val promptWithContext = "$systemInstructions\n\n$contextBuilder\n\nPertanyaan Pengguna: $userText"
+                val questionLabel = if (activeLanguage == AppLanguage.ENGLISH) "User Question" else "Pertanyaan Pengguna"
+                val promptWithContext = "$systemInstructions\n\n$contextBuilder\n\n$questionLabel: $userText"
                 
                 val contentsToSend = mutableListOf<GeminiContent>()
                 if (history.size > 1) {
@@ -131,14 +167,20 @@ class ChatbotViewModel(
                     request = request
                 )
 
+                val fallbackReply = if (activeLanguage == AppLanguage.ENGLISH) {
+                    "Sorry, our service is currently experiencing technical difficulties. Please try again shortly."
+                } else {
+                    "Mohon maaf, saat ini layanan kami sedang mengalami kendala teknis. Silakan mencoba kembali beberapa saat lagi."
+                }
                 val botReply = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                    ?: "Mohon maaf, saat ini layanan kami sedang mengalami kendala teknis. Silakan mencoba kembali beberapa saat lagi."
+                    ?: fallbackReply
 
                 chatRepository.insertMessage(currentUserId, botReply, false)
 
             } catch (e: Exception) {
                 val fallbackUserId = authRepository.getCurrentUser()?.id ?: ""
-                chatRepository.insertMessage(fallbackUserId, "Kesalahan sistem: ${e.localizedMessage}", false)
+                val errorPrefix = if (activeLanguage == AppLanguage.ENGLISH) "System error" else "Kesalahan sistem"
+                chatRepository.insertMessage(fallbackUserId, "$errorPrefix: ${e.localizedMessage}", false)
             } finally {
                 _isLoading.value = false
             }
@@ -186,12 +228,13 @@ class ChatbotViewModel(
 
 class ChatbotViewModelFactory(
     private val repository: ChatRepository,
-    private val authRepository: com.example.bukukita.data.repository.AuthRepository
+    private val authRepository: com.example.bukukita.data.repository.AuthRepository,
+    private val languagePreferenceStore: LanguagePreferenceStore? = null
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ChatbotViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ChatbotViewModel(repository, authRepository) as T
+            return ChatbotViewModel(repository, authRepository, languagePreferenceStore) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

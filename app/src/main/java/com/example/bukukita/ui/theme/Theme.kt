@@ -88,6 +88,7 @@ val BukuKitaShapes = Shapes(
 @Composable
 fun BukuKitaTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
+    appLanguage: AppLanguage = AppLanguage.INDONESIAN,
     darkTheme: Boolean = when (themeMode) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false
@@ -107,10 +108,12 @@ fun BukuKitaTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = BukuKitaTypography,
-        shapes = BukuKitaShapes,
-        content = content
-    )
+    ProvideAppLanguage(language = appLanguage) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = BukuKitaTypography,
+            shapes = BukuKitaShapes,
+            content = content
+        )
+    }
 }

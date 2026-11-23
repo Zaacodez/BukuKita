@@ -1,10 +1,14 @@
 <div align="center">
 
+<p>
+  <strong>English</strong> · <a href="README.id.md">Bahasa Indonesia</a>
+</p>
+
 # BukuKita
 
 **Modern Soft Editorial Bookstore & AI Catalog Assistant for Android**
 
-A native Bahasa Indonesia Android bookstore catalog and conversational AI book assistant built for **Toko Buku Semut Alas** (Malang), crafted with Jetpack Compose, Material Design 3, Supabase, and the Google Gemini API.
+A bilingual (Bahasa Indonesia & English) native Android bookstore catalog and conversational AI book assistant built for **Toko Buku Semut Alas** (Malang), crafted with Jetpack Compose, Material Design 3, Supabase, and the Google Gemini API.
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2.10-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-Material_3-496A57?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
@@ -48,7 +52,7 @@ Originally built as an undergraduate thesis (*Tugas Akhir / Skripsi*) focused on
 
 - **Live Catalog Grounding:** Strips conversational greetings from user queries, performs multi-keyword `ilike` recall across book `title` and `author` in Supabase (up to 20 matching records), and injects live prices, stock counts, and store hours into a strict low-temperature (`0.1`) **Gemini (`gemini-3.1-flash-lite`)** prompt.
 - **Persistent Multi-Turn Memory:** Stores per-user conversation history locally in **Room SQLite** (`bukukita_database`), passes the last 6 messages for conversational continuity, and supports one-tap history reset with confirmation.
-- **Thoughtful Guardrails:** Includes an illustrated welcome screen with starter prompt chips and Bahasa Indonesia input checks. Because generative AI can still misinterpret context, critical details like stock and pricing should always be cross-checked against the catalog view.
+- **Thoughtful Guardrails:** Includes an illustrated welcome screen with starter prompt chips and language-aware prompt grounding matching the active app language. Because generative AI can still misinterpret context, critical details like stock and pricing should always be cross-checked against the catalog view.
 
 ---
 
@@ -58,7 +62,7 @@ Originally built as an undergraduate thesis (*Tugas Akhir / Skripsi*) focused on
 
 - **Flexible Authentication:** Sign in using either **email or username** (resolved via Supabase `profiles`) with persistent local sessions powered by Supabase GoTrue Auth and `SharedPreferences`.
 - **Profile & Avatar Management:** Full account registration and profile editing (`username`, `full_name`, `email`) with optional profile photo uploads directly to Supabase Storage (`avatars` bucket).
-- **Theme Personalization & Store Info:** Modal Settings sheet with persisted `ThemeMode` selection (*Ikuti Sistem*, *Mode Terang*, *Mode Gelap*) and quick access to Toko Buku Semut Alas store hours and address.
+- **Theme, Language & Store Info:** Switch between **Bahasa Indonesia** and **English** directly from the Login screen or the Settings sheet, choose a persisted `ThemeMode` (*Follow System*, *Light Mode*, *Dark Mode*), and view Toko Buku Semut Alas store hours and address.
 
 ---
 
@@ -108,7 +112,7 @@ flowchart LR
     Repo --> SupaSDK["Supabase Kotlin SDK\n(GoTrue Auth · PostgREST · Storage)"]
     Repo --> Retrofit["Retrofit + OkHttp\n(Supabase REST · Gemini 3.1 Flash Lite)"]
     Repo --> Room["Room SQLite\n(Per-user Chat History)"]
-    UI --> Prefs["SharedPreferences\n(ThemeMode & Session)"]
+    UI --> Prefs["SharedPreferences\n(ThemeMode, Language & Session)"]
 ```
 
 | Layer | Technologies |
@@ -139,7 +143,7 @@ BukuKita/
 │   │   │   ├── chatbot/       # ChatbotScreen (welcome state + grounded chat)
 │   │   │   ├── profile/       # ProfileScreen, EditProfileScreen, SettingsSheet
 │   │   │   ├── components/    # Shared editorial cards, chips, inputs, bottom bar, shimmer/states
-│   │   │   └── theme/         # 3-layer Light/Dark tokens, Typography, Spacing, Motion, ThemePreference
+│   │   │   └── theme/         # 3-layer Light/Dark tokens, Typography, Spacing, Motion, Theme & Language Preferences
 │   │   ├── utils/             # Rupiah currency & chat timestamp formatters
 │   │   ├── viewmodel/         # BookViewModel, BookDetailViewModel, ChatbotViewModel, AuthViewModel
 │   │   ├── BukuKitaApplication.kt

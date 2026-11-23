@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 sealed class BookUiState {
     object Loading : BookUiState()
@@ -22,8 +23,21 @@ sealed class BookUiState {
 @OptIn(FlowPreview::class)
 class BookViewModel : ViewModel() {
     private val repository = BookRepository()
-    private companion object {
-        const val ALL_CATEGORY = "Semua"
+    internal companion object {
+        const val ALL_CATEGORY = ""
+
+        fun normalizeCategorySelection(category: String): String {
+            val trimmed = category.trim()
+            return if (
+                trimmed.isEmpty() ||
+                trimmed.equals("Semua", ignoreCase = true) ||
+                trimmed.equals("All", ignoreCase = true)
+            ) {
+                ALL_CATEGORY
+            } else {
+                trimmed
+            }
+        }
     }
 
     private val _uiState = MutableStateFlow<BookUiState>(BookUiState.Loading)
@@ -35,7 +49,7 @@ class BookViewModel : ViewModel() {
     private val _selectedCategory = MutableStateFlow(ALL_CATEGORY)
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
-    private val _categories = MutableStateFlow(listOf(ALL_CATEGORY))
+    private val _categories = MutableStateFlow<List<String>>(emptyList())
     val categories: StateFlow<List<String>> = _categories.asStateFlow()
 
     init {
@@ -67,14 +81,14 @@ class BookViewModel : ViewModel() {
     }
 
     fun retry() {
-        if (_categories.value.size <= 1) {
+        if (_categories.value.isEmpty()) {
             fetchCategories()
         }
         executeFetch(_searchQuery.value, _selectedCategory.value)
     }
 
     fun onCategorySelected(category: String) {
-        _selectedCategory.value = category
+        _selectedCategory.value = normalizeCategorySelection(category)
     }
 
     private fun fetchCategories() {
@@ -86,9 +100,9 @@ class BookViewModel : ViewModel() {
                     .distinct()
                     .sorted()
                 
-                _categories.value = listOf(ALL_CATEGORY) + uniqueCategories
+                _categories.value = uniqueCategories
             } catch (e: Exception) {
-                // Keep default ["Semua"] if offline or failing
+                // Keep empty list if offline; CategoryFilterRow still renders localized All chip
             }
         }
     }
@@ -109,7 +123,8 @@ class BookViewModel : ViewModel() {
 
                 _uiState.value = BookUiState.Success(books)
             } catch (e: Exception) {
-                _uiState.value = BookUiState.Error(e.localizedMessage ?: "Kesalahan tidak diketahui")
+                val fallback = if (Locale.getDefault().language == "en") "Unknown error" else "Kesalahan tidak diketahui"
+                _uiState.value = BookUiState.Error(e.localizedMessage ?: fallback)
             }
         }
     }

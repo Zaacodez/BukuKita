@@ -9,8 +9,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
+
+    private fun isEnglish(): Boolean = Locale.getDefault().language == "en"
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -58,7 +61,7 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
                 repository.signUp(email, password, username, fullName, avatarBytes)
                 _isLoggedIn.value = true // Automatically log in on successful registration
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Terjadi kesalahan saat mendaftar"
+                _errorMessage.value = e.message ?: if (isEnglish()) "An error occurred while signing up" else "Terjadi kesalahan saat mendaftar"
             } finally {
                 _isLoading.value = false
             }
@@ -73,7 +76,7 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
                 repository.signIn(emailOrUsername, password)
                 _isLoggedIn.value = true
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Terjadi kesalahan saat masuk"
+                _errorMessage.value = e.message ?: if (isEnglish()) "An error occurred while signing in" else "Terjadi kesalahan saat masuk"
             } finally {
                 _isLoading.value = false
             }
@@ -108,10 +111,10 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
                         fetchProfile()
                         onSuccess()
                     } else {
-                        _errorMessage.value = "Gagal memperbarui profil"
+                        _errorMessage.value = if (isEnglish()) "Failed to update profile" else "Gagal memperbarui profil"
                     }
                 } catch (e: Exception) {
-                    _errorMessage.value = e.message ?: "Terjadi kesalahan"
+                    _errorMessage.value = e.message ?: if (isEnglish()) "An error occurred" else "Terjadi kesalahan"
                 } finally {
                     _isUpdating.value = false
                 }

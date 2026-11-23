@@ -60,6 +60,7 @@ import com.example.bukukita.R
 import com.example.bukukita.data.model.UserProfile
 import com.example.bukukita.ui.components.BukuKitaBrandMark
 import com.example.bukukita.ui.components.rememberEditorialShimmerBrush
+import com.example.bukukita.ui.theme.AppLanguage
 import com.example.bukukita.ui.theme.BukuKitaSpacing
 import com.example.bukukita.ui.theme.ThemeMode
 import com.example.bukukita.viewmodel.AuthViewModel
@@ -70,7 +71,9 @@ fun ProfileScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
     currentThemeMode: ThemeMode = ThemeMode.SYSTEM,
-    onThemeModeChange: (ThemeMode) -> Unit = {}
+    onThemeModeChange: (ThemeMode) -> Unit = {},
+    currentLanguage: AppLanguage = AppLanguage.INDONESIAN,
+    onLanguageChange: (AppLanguage) -> Unit = {}
 ) {
     val profile by authViewModel.userProfile.collectAsState()
     val isLoading by authViewModel.isLoading.collectAsState()
@@ -84,6 +87,8 @@ fun ProfileScreen(
         isLoading = isLoading,
         currentThemeMode = currentThemeMode,
         onThemeModeChange = onThemeModeChange,
+        currentLanguage = currentLanguage,
+        onLanguageChange = onLanguageChange,
         onNavigateToEditProfile = onNavigateToEditProfile,
         onLogout = {
             authViewModel.logout()
@@ -98,6 +103,8 @@ internal fun ProfileScreenContent(
     isLoading: Boolean,
     currentThemeMode: ThemeMode = ThemeMode.SYSTEM,
     onThemeModeChange: (ThemeMode) -> Unit = {},
+    currentLanguage: AppLanguage = AppLanguage.INDONESIAN,
+    onLanguageChange: (AppLanguage) -> Unit = {},
     onNavigateToEditProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
@@ -322,6 +329,8 @@ internal fun ProfileScreenContent(
         SettingsSheet(
             currentThemeMode = currentThemeMode,
             onSelectThemeMode = onThemeModeChange,
+            currentLanguage = currentLanguage,
+            onSelectLanguage = onLanguageChange,
             onDismiss = { showSettingsSheet = false }
         )
     }

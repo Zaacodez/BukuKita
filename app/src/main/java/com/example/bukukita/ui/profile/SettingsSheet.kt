@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BrightnessAuto
 import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.bukukita.R
 import com.example.bukukita.ui.components.BukuKitaBrandMark
+import com.example.bukukita.ui.theme.AppLanguage
 import com.example.bukukita.ui.theme.BukuKitaSpacing
 import com.example.bukukita.ui.theme.ThemeMode
 
@@ -46,7 +50,9 @@ import com.example.bukukita.ui.theme.ThemeMode
 fun SettingsSheet(
     currentThemeMode: ThemeMode,
     onSelectThemeMode: (ThemeMode) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    currentLanguage: AppLanguage = AppLanguage.INDONESIAN,
+    onSelectLanguage: (AppLanguage) -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -59,6 +65,7 @@ fun SettingsSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = BukuKitaSpacing.lg)
                 .padding(bottom = BukuKitaSpacing.xl)
                 .navigationBarsPadding()
@@ -80,23 +87,48 @@ fun SettingsSheet(
             Spacer(modifier = Modifier.height(BukuKitaSpacing.xs))
 
             Column(verticalArrangement = Arrangement.spacedBy(BukuKitaSpacing.xs)) {
-                ThemeOptionRow(
+                SelectableOptionRow(
                     label = stringResource(R.string.theme_system),
                     icon = Icons.Outlined.BrightnessAuto,
                     selected = currentThemeMode == ThemeMode.SYSTEM,
                     onClick = { onSelectThemeMode(ThemeMode.SYSTEM) }
                 )
-                ThemeOptionRow(
+                SelectableOptionRow(
                     label = stringResource(R.string.theme_light),
                     icon = Icons.Outlined.LightMode,
                     selected = currentThemeMode == ThemeMode.LIGHT,
                     onClick = { onSelectThemeMode(ThemeMode.LIGHT) }
                 )
-                ThemeOptionRow(
+                SelectableOptionRow(
                     label = stringResource(R.string.theme_dark),
                     icon = Icons.Outlined.DarkMode,
                     selected = currentThemeMode == ThemeMode.DARK,
                     onClick = { onSelectThemeMode(ThemeMode.DARK) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(BukuKitaSpacing.xl))
+
+            Text(
+                text = stringResource(R.string.language_section),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(BukuKitaSpacing.xs))
+
+            Column(verticalArrangement = Arrangement.spacedBy(BukuKitaSpacing.xs)) {
+                SelectableOptionRow(
+                    label = stringResource(R.string.language_indonesian),
+                    icon = Icons.Outlined.Language,
+                    selected = currentLanguage == AppLanguage.INDONESIAN,
+                    onClick = { onSelectLanguage(AppLanguage.INDONESIAN) }
+                )
+                SelectableOptionRow(
+                    label = stringResource(R.string.language_english),
+                    icon = Icons.Outlined.Language,
+                    selected = currentLanguage == AppLanguage.ENGLISH,
+                    onClick = { onSelectLanguage(AppLanguage.ENGLISH) }
                 )
             }
 
@@ -145,7 +177,7 @@ fun SettingsSheet(
 }
 
 @Composable
-private fun ThemeOptionRow(
+private fun SelectableOptionRow(
     label: String,
     icon: ImageVector,
     selected: Boolean,

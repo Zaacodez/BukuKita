@@ -62,6 +62,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -113,6 +114,7 @@ internal fun ChatbotScreenContent(
     var showClearDialog by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val todayLabel = stringResource(R.string.chatbot_today)
+    val activeLocale = LocalConfiguration.current.locales[0]
 
     LaunchedEffect(prefillQuery) {
         if (prefillQuery.isNotBlank() && inputText.isBlank()) {
@@ -238,11 +240,11 @@ internal fun ChatbotScreenContent(
                         items = messages,
                         key = { index, msg -> "${msg.timestamp}_${msg.isUser}_$index" }
                     ) { index, message ->
-                        val dateLabel = remember(message.timestamp, todayLabel) {
-                            formatChatDateLabel(message.timestamp, todayLabel)
+                        val dateLabel = remember(message.timestamp, todayLabel, activeLocale) {
+                            formatChatDateLabel(message.timestamp, todayLabel, activeLocale)
                         }
                         val prevDateLabel = if (index > 0) {
-                            formatChatDateLabel(messages[index - 1].timestamp, todayLabel)
+                            formatChatDateLabel(messages[index - 1].timestamp, todayLabel, activeLocale)
                         } else {
                             null
                         }

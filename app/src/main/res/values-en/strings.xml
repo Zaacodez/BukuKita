@@ -1,0 +1,111 @@
+<resources>
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_chatbot">Assistant</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Chatbot -->
+    <string name="chatbot_title">BukuKita Assistant</string>
+    <string name="chatbot_subtitle">Toko Buku Semut Alas • Live Catalog</string>
+    <string name="chatbot_back">Back</string>
+    <string name="chatbot_placeholder">Ask about our books…</string>
+    <string name="chatbot_send">Send message</string>
+    <string name="chatbot_open">Open BukuKita Assistant</string>
+    <string name="chatbot_clear_history">Clear chat history</string>
+    <string name="chatbot_clear_confirm_title">Clear chat history?</string>
+    <string name="chatbot_clear_confirm_body">All your conversation messages with BukuKita Assistant on this device will be deleted.</string>
+    <string name="chatbot_welcome_title">Welcome to BukuKita Assistant</string>
+    <string name="chatbot_welcome_subtitle">Ask about book availability, authors, prices, or Toko Buku Semut Alas opening hours.</string>
+    <string name="chatbot_prompt_1">What fiction books are available?</string>
+    <string name="chatbot_prompt_2">Store opening hours and address?</string>
+    <string name="chatbot_today">Today</string>
+    <string name="chatbot_typing">Assistant is typing…</string>
+
+    <!-- Home & Search -->
+    <string name="search_books">Search title or author…</string>
+    <string name="search_screen_title">Search Books</string>
+    <string name="recommended_books">Recommended Books</string>
+    <string name="all_books">All Books</string>
+    <string name="search">Search</string>
+    <string name="clear">Clear</string>
+    <string name="filter">Filter</string>
+    <string name="all_categories">All</string>
+    <string name="books_not_found">No books found.</string>
+    <string name="books_not_found_hint">Try another keyword or choose the All category to browse the full collection.</string>
+    <string name="reset_search">Reset Search</string>
+    <string name="results_count">Showing %1$d results</string>
+    <string name="retry">Try Again</string>
+    <string name="error_load_title">Unable to load catalog</string>
+
+    <!-- Book Detail -->
+    <string name="book_detail_title">Book Details</string>
+    <string name="back">Back</string>
+    <string name="error_prefix">Error: %1$s</string>
+    <string name="cover_for">Cover for %1$s</string>
+    <string name="by_author">by %1$s</string>
+    <string name="category_label">Category: %1$s</string>
+    <string name="stock_label">Stock: %1$d</string>
+    <string name="price_label">Price</string>
+    <string name="availability_label">Availability</string>
+    <string name="stock_available">In stock • %1$d left</string>
+    <string name="stock_empty">Out of stock</string>
+    <string name="description_label">Description</string>
+    <string name="no_description">No description available yet.</string>
+    <string name="ask_assistant_about_book">Ask Assistant about This Book</string>
+    <string name="ask_assistant_prefill">Is %1$s by %2$s currently available and how much is it?</string>
+    <string name="loading">Loading…</string>
+
+    <!-- Profile & Settings -->
+    <string name="profile_title">Profile</string>
+    <string name="reader_badge">BukuKita Reader</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="my_wishlist">My Wishlist</string>
+    <string name="order_history">Order History</string>
+    <string name="my_reviews">My Reviews</string>
+    <string name="settings">Settings</string>
+    <string name="settings_subtitle">Appearance, language &amp; store info</string>
+    <string name="logout">Sign Out</string>
+    <string name="logout_confirm_title">Sign out of BukuKita?</string>
+    <string name="logout_confirm_body">You will need to sign in again to access the catalog and your chat history.</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm_delete">Delete</string>
+    <string name="profile_photo_desc">Profile Photo</string>
+    <string name="tap_to_change_photo">Tap to change photo</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="selected_avatar">Selected avatar</string>
+    <string name="current_avatar">Current avatar</string>
+    <string name="default_avatar">Default avatar</string>
+    <string name="appearance_section">Appearance</string>
+    <string name="language_section">Language</string>
+    <string name="language_selector_desc">Choose app language</string>
+    <string name="store_info_section">Store Information</string>
+    <string name="theme_system">Follow System</string>
+    <string name="theme_light">Light Mode</string>
+    <string name="theme_dark">Dark Mode</string>
+
+    <!-- Auth -->
+    <string name="login_welcome">Welcome Back</string>
+    <string name="login_subtitle">Sign in to browse the catalog and enjoy our bookstore assistant</string>
+    <string name="email_or_username">Email or Username</string>
+    <string name="password">Password</string>
+    <string name="password_icon">Password Icon</string>
+    <string name="toggle_password_visibility">Show or hide password</string>
+    <string name="login_empty_error">Email/username and password cannot be empty</string>
+    <string name="login_button">Sign In</string>
+    <string name="login_prompt">Don\'t have an account? </string>
+    <string name="register_link">Sign Up</string>
+    <string name="register_title">Create Account</string>
+    <string name="register_subtitle">Sign up to explore BukuKita\'s catalog and services</string>
+    <string name="profile_photo">Profile Photo</string>
+    <string name="add_profile_photo">Add Profile Photo (Optional)</string>
+    <string name="username">Username</string>
+    <string name="email">Email</string>
+    <string name="full_name">Full Name</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="register_empty_error">All fields except profile photo are required</string>
+    <string name="password_mismatch_error">Passwords do not match</string>
+    <string name="register_button">Sign Up</string>
+    <string name="register_prompt">Already have an account? </string>
+    <string name="login_link">Sign In</string>
+    <string name="brand_logo_desc">BukuKita Logo</string>
+</resources>

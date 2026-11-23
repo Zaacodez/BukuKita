@@ -19,12 +19,16 @@ fun formatChatTime(timestampMillis: Long): String {
     return formatter.format(Date(timestampMillis))
 }
 
-fun formatChatDateLabel(timestampMillis: Long, todayLabel: String): String {
+fun formatChatDateLabel(
+    timestampMillis: Long,
+    todayLabel: String,
+    locale: Locale = Locale.getDefault()
+): String {
     val now = Calendar.getInstance()
     val target = Calendar.getInstance().apply { timeInMillis = timestampMillis }
     val isSameDay = now.get(Calendar.YEAR) == target.get(Calendar.YEAR) &&
         now.get(Calendar.DAY_OF_YEAR) == target.get(Calendar.DAY_OF_YEAR)
     if (isSameDay) return todayLabel
-    val formatter = SimpleDateFormat("d MMMM yyyy", IndonesiaLocale)
+    val formatter = SimpleDateFormat("d MMMM yyyy", locale)
     return formatter.format(Date(timestampMillis))
 }

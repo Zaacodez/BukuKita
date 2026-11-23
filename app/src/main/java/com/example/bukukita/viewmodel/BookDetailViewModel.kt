@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 sealed class BookDetailUiState {
     object Loading : BookDetailUiState()
@@ -24,15 +25,18 @@ class BookDetailViewModel : ViewModel() {
     fun fetchBookDetail(id: String) {
         viewModelScope.launch {
             _uiState.value = BookDetailUiState.Loading
+            val isEnglish = Locale.getDefault().language == "en"
             try {
                 val book = repository.getBookById(id)
                 if (book != null) {
                     _uiState.value = BookDetailUiState.Success(book)
                 } else {
-                    _uiState.value = BookDetailUiState.Error("Book not found")
+                    _uiState.value = BookDetailUiState.Error(if (isEnglish) "Book not found" else "Buku tidak ditemukan")
                 }
             } catch (e: Exception) {
-                _uiState.value = BookDetailUiState.Error(e.localizedMessage ?: "Unknown Error")
+                _uiState.value = BookDetailUiState.Error(
+                    e.localizedMessage ?: if (isEnglish) "Unknown error" else "Kesalahan tidak diketahui"
+                )
             }
         }
     }

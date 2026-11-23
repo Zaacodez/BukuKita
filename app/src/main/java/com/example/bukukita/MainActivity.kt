@@ -1,5 +1,6 @@
 package com.example.bukukita
 
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -38,30 +39,46 @@ import com.example.bukukita.ui.home.HomeScreen
 import com.example.bukukita.ui.profile.EditProfileScreen
 import com.example.bukukita.ui.profile.ProfileScreen
 import com.example.bukukita.ui.search.SearchScreen
+import com.example.bukukita.ui.theme.AppLanguage
 import com.example.bukukita.ui.theme.BukuKitaMotion
 import com.example.bukukita.ui.theme.BukuKitaTheme
+import com.example.bukukita.ui.theme.LanguagePreferenceStore
 import com.example.bukukita.ui.theme.ThemeMode
 import com.example.bukukita.ui.theme.ThemePreferenceStore
+import com.example.bukukita.ui.theme.withAppLanguage
 import com.example.bukukita.viewmodel.AuthViewModel
 import com.example.bukukita.viewmodel.AuthViewModelFactory
 import com.example.bukukita.viewmodel.ChatbotViewModel
 import com.example.bukukita.viewmodel.ChatbotViewModelFactory
+import java.util.Locale
 
 private val TopLevelRoutes = setOf("home", "search", "chatbot", "profile")
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        val savedLanguage = LanguagePreferenceStore.readSavedLanguage(newBase)
+        Locale.setDefault(savedLanguage.locale)
+        super.attachBaseContext(newBase.withAppLanguage(savedLanguage))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val context = LocalContext.current
-            val themeStore = remember(context) { ThemePreferenceStore(context.applicationContext) }
+            val app = applicationContext as BukuKitaApplication
+            val themeStore = remember(app) { ThemePreferenceStore(app) }
             val themeMode by themeStore.themeMode.collectAsState()
+            val appLanguage by app.languagePreferenceStore.language.collectAsState()
 
-            BukuKitaTheme(themeMode = themeMode) {
+            BukuKitaTheme(
+                themeMode = themeMode,
+                appLanguage = appLanguage
+            ) {
                 BukuKitaApp(
                     themeMode = themeMode,
-                    onThemeModeChange = themeStore::setThemeMode
+                    onThemeModeChange = themeStore::setThemeMode,
+                    appLanguage = appLanguage,
+                    onLanguageChange = app.languagePreferenceStore::setLanguage
                 )
             }
         }
@@ -71,7 +88,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun BukuKitaApp(
     themeMode: ThemeMode,
-    onThemeModeChange: (ThemeMode) -> Unit
+    onThemeModeChange: (ThemeMode) -> Unit,
+    appLanguage: AppLanguage = AppLanguage.INDONESIAN,
+    onLanguageChange: (AppLanguage) -> Unit = {}
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as BukuKitaApplication
@@ -145,6 +164,8 @@ fun BukuKitaApp(
             composable("login") {
                 LoginScreen(
                     viewModel = authViewModel,
+                    currentLanguage = appLanguage,
+                    onLanguageChange = onLanguageChange,
                     onNavigateToHome = {
                         navController.navigate("home") {
                             popUpTo("login") { inclusive = true }
@@ -198,7 +219,11 @@ fun BukuKitaApp(
             ) { backStackEntry ->
                 val prefill = backStackEntry.arguments?.getString("prefill").orEmpty()
                 val chatbotViewModel: ChatbotViewModel = viewModel(
-                    factory = ChatbotViewModelFactory(application.chatRepository, application.authRepository)
+                    factory = ChatbotViewModelFactory(
+                        application.chatRepository,
+                        application.authRepository,
+                        application.languagePreferenceStore
+                    )
                 )
                 ChatbotScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -211,6 +236,8 @@ fun BukuKitaApp(
                     authViewModel = authViewModel,
                     currentThemeMode = themeMode,
                     onThemeModeChange = onThemeModeChange,
+                    currentLanguage = appLanguage,
+                    onLanguageChange = onLanguageChange,
                     onNavigateToLogin = {
                         navController.navigate("login") {
                             popUpTo(0) { inclusive = true }
